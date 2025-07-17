@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniMES.API.Commands;
 using MiniMES.API.Data;
+using MiniMES.API.DTOs;
 using MiniMES.API.Models;
 
 namespace MiniMES.API.Controllers
@@ -11,38 +13,41 @@ namespace MiniMES.API.Controllers
     public class MaquinasController : ControllerBase
     {
         private readonly MiniMESContext _context;
-
-        public MaquinasController(MiniMESContext context)
+        private readonly IMapper _mapper;
+        public MaquinasController(MiniMESContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MaquinaModel>>> GetMaquinas()
+        public async Task<ActionResult<IEnumerable<MaquinaDto>>> GetMaquinas()
         {
-            return await _context.Maquinas.ToListAsync();
+            var maquinas = await _context.Maquinas.ToListAsync();
+            var maquinasDto = _mapper.Map<IEnumerable<MaquinaDto>>(maquinas);
+            return Ok(maquinasDto);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<MaquinaModel>> GetMaquina(int id)
+        public async Task<ActionResult<MaquinaDto>> GetMaquina(int id)
         {
             var maquina = await _context.Maquinas.FindAsync(id);
             if (maquina == null) return NotFound();
-            return maquina;
+
+            var maquinaDto = _mapper.Map<MaquinaDto>(maquina);
+            return Ok(maquinaDto);
         }
 
         [HttpPost]
-        public async Task<ActionResult<MaquinaModel>> CreateMaquina(CreateMaquinaCommand command)
+        public async Task<ActionResult<MaquinaDto>> CreateMaquina(CreateMaquinaCommand command)
         {
-            MaquinaModel maquina = new MaquinaModel()
-            {
-                Nome = command.Nome,
-                IP = command.IP,
-                Ativa = command.Ativa,
-            };
+            var maquina = _mapper.Map<MaquinaModel>(command);
+
             _context.Maquinas.Add(maquina);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetMaquina), new { id = maquina.Id }, maquina);
+
+            var maquinaDto = _mapper.Map<MaquinaDto>(maquina);
+            return CreatedAtAction(nameof(GetMaquina), new { id = maquina.Id }, maquinaDto);
         }
 
         [HttpPut("{id}")]
@@ -50,14 +55,28 @@ namespace MiniMES.API.Controllers
         {
             var maquina = await _context.Maquinas.FindAsync(id);
             if (maquina == null)
+            {
                 return NotFound();
+            }
 
-            maquina.Ativa = command.Ativa;
-            maquina.IP = command.IP;
-            maquina.Nome = command.Nome;
-            
-            _context.Entry(maquina).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            _mapper.Map(command, maquina);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!MaquinaExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
             return NoContent();
         }
 
@@ -70,6 +89,11 @@ namespace MiniMES.API.Controllers
             _context.Maquinas.Remove(maquina);
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        private bool MaquinaExists(int id)
+        {
+            return _context.Maquinas.Any(e => e.Id == id);
         }
     }
 }

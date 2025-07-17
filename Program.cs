@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MiniMES.API.Configurations;
 using MiniMES.API.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MiniMESContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddControllers();
 
 var app = builder.Build();
