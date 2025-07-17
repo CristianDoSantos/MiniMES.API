@@ -71,5 +71,29 @@ namespace MiniMES.API.Controllers
             var eventoDto = _mapper.Map<EventoProducaoDto>(evento);
             return Ok(eventoDto);
         }
+
+        [HttpPost("xml")]
+        [Consumes("application/xml")]
+        public async Task<ActionResult<EventoProducaoDto>> CreateEventoFromXml([FromBody] CreateEventoProducaoXmlCommand command)
+        {
+            var evento = _mapper.Map<EventoProducaoModel>(command);
+
+            var maquina = await _context.Maquinas.FindAsync(command.MaquinaId);
+            var ordem = await _context.Ordens.FindAsync(command.OrdemProducaoId);
+
+            if (maquina == null || ordem == null)
+            {
+                return BadRequest("Máquina ou Ordem de Produção inválida (do XML).");
+            }
+
+            evento.Maquina = maquina;
+            evento.OrdemProducao = ordem;
+
+            _context.Eventos.Add(evento);
+            await _context.SaveChangesAsync();
+
+            var eventoDto = _mapper.Map<EventoProducaoDto>(evento);
+            return CreatedAtAction(nameof(GetEventoById), new { id = evento.Id }, eventoDto);
+        }
     }
 }

@@ -24,6 +24,8 @@ namespace MiniMES.API.Configurations
             CreateMap<CreateOrdemProducaoCommand, OrdemProducaoModel>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status ?? StatusOrdem.Pendente));
 
+            CreateMap<CreateEventoProducaoXmlCommand, EventoProducaoModel>();
+
         }
     }
 }
