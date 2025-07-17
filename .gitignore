@@ -1,0 +1,35 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Arquivos de configuração específicos do projeto
+*.csproj.user
+*.db
+*.log
+*.sqlite
+*.pfx
+*.p12
+*.Publish.xml
+
+# Configurações locais
+appsettings.Development.json
+secrets.json
+
+# Node (caso use front-end junto)
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# Publicações
+publish/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
